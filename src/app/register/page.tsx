@@ -10,10 +10,9 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     name: "",
-    referralCode: "",
   });
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -24,19 +23,22 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
 
-    if (!formData.phoneNumber || !formData.password || !formData.name) {
-      setError("يرجى ملء جميع الحقول المطلوبة");
+    const phone = formData.phoneNumber.trim();
+    const pass = formData.password.trim();
+    const name = formData.name.trim();
+
+    if (!phone || !pass || !name) {
+      setError("يرجى填写 جميع الحقول");
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (pass.length < 6) {
       setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (pass !== formData.confirmPassword) {
       setError("كلمات المرور غير متطابقة");
       return;
     }
@@ -47,27 +49,20 @@ export default function RegisterPage() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phoneNumber: formData.phoneNumber.trim(),
-          password: formData.password,
-          name: formData.name.trim(),
-          referralCode: formData.referralCode.trim() || undefined,
-        }),
+        body: JSON.stringify({ phoneNumber: phone, password: pass, name }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "فشل التسجيل");
+        setError(data.error || "فشل إنشاء الحساب");
         return;
       }
 
-      setSuccess(data.message || "تم إنشاء الحساب بنجاح!");
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
-    } catch (err) {
-      setError("حدث خطأ في الاتصال بالخادم");
+      setSuccess(true);
+      setTimeout(() => router.push("/login"), 2000);
+    } catch {
+      setError("حدث خطأ في الاتصال");
     } finally {
       setLoading(false);
     }
@@ -80,8 +75,8 @@ export default function RegisterPage() {
           <Link href="/profile" className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             TaskHub
           </Link>
-          <h1 className="text-2xl font-bold text-white mt-4">إنشاء حساب</h1>
-          <p className="text-white/60">انضم إلى منصتنا</p>
+          <h1 className="text-2xl font-bold text-white mt-4">إنشاء حساب جديد</h1>
+          <p className="text-white/60">أدخل بياناتك للاشتراك</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,98 +88,73 @@ export default function RegisterPage() {
 
           {success && (
             <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm text-center">
-              {success}
+              تم إنشاء الحساب بنجاح! جاري التحويل...
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              الاسم الكامل
-            </label>
+            <label className="block text-sm font-medium text-white/80 mb-2">الاسم</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
-              placeholder="أدخل اسمك الكامل"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+              placeholder="أدخل اسمك"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              رقم الهاتف
-            </label>
+            <label className="block text-sm font-medium text-white/80 mb-2">رقم الهاتف</label>
             <input
               type="tel"
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
               placeholder="أدخل رقم الهاتف"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              كلمة المرور
-            </label>
+            <label className="block text-sm font-medium text-white/80 mb-2">كلمة المرور</label>
             <input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
-              placeholder="أنشئ كلمة مرور (6 أحرف على الأقل)"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+              placeholder="أدخل كلمة المرور"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              تأكيد كلمة المرور
-            </label>
+            <label className="block text-sm font-medium text-white/80 mb-2">تأكيد كلمة المرور</label>
             <input
               type="password"
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
-              placeholder="أكد كلمة المرور"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+              placeholder="أعد إدخال كلمة المرور"
               required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              كود الإحالة (اختياري)
-            </label>
-            <input
-              type="text"
-              name="referralCode"
-              value={formData.referralCode}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
-              placeholder="أدخل كود الإحالة إن وجد"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition disabled:opacity-50"
           >
-            {loading ? "جاري الإنشاء..." : "تسجيل"}
+            {loading ? "جاري الإنشاء..." : "إنشاء حساب"}
           </button>
         </form>
 
         <p className="text-center text-white/60 mt-6">
-          لديك حساب بالفعل؟{" "}
-          <Link href="/login" className="text-purple-400 hover:text-pink-400 font-medium">
-            تسجيل الدخول
-          </Link>
+          لديك حساب؟ <Link href="/login" className="text-purple-400 hover:text-pink-400">تسجيل الدخول</Link>
         </p>
       </div>
     </div>
