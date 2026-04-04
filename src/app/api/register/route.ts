@@ -6,7 +6,7 @@ import crypto from "crypto"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { phoneNumber, password, name, invitationCode } = body
+    const { phoneNumber, password, name, referralCode } = body
 
     if (!phoneNumber || !password) {
       return NextResponse.json(
@@ -27,16 +27,16 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12)
-    const referralCode = crypto.randomBytes(4).toString('hex').toUpperCase()
+    const userReferralCode = crypto.randomBytes(4).toString('hex').toUpperCase()
 
     let referredByCode: string | null = null
 
-    if (invitationCode) {
+    if (referralCode) {
       const referrer = await prisma.user.findUnique({
-        where: { referralCode: invitationCode.toUpperCase() }
+        where: { referralCode: referralCode.toUpperCase() }
       })
       if (referrer) {
-        referredByCode = invitationCode.toUpperCase()
+        referredByCode = referralCode.toUpperCase()
       }
     }
 
@@ -44,10 +44,12 @@ export async function POST(request: Request) {
       data: {
         phoneNumber,
         passwordHash,
-        name,
-        referralCode,
+        name: name || null,
+        referralCode: userReferralCode,
         referredByCode,
-        isVerified: true
+        isVerified: true,
+        role: "USER",
+        balance: 0
       },
       select: {
         id: true,
@@ -58,7 +60,6 @@ export async function POST(request: Request) {
       }
     })
 
-    // Create referral reward record if referred
     if (referredByCode) {
       const referrer = await prisma.user.findUnique({
         where: { referralCode: referredByCode }
@@ -75,27 +76,25 @@ export async function POST(request: Request) {
       }
     }
 
-    // Assign free store automatically
-    await prisma.userStore.upsert({
-      where: {
-        userId_storeId: {
-          userId: user.id,
-          storeId: 1
-        }
-      },
-      update: {},
-      create: {
-        userId: user.id,
-        storeId: 1,
-        isActive: true
-      }
+    const store = await prisma.store.findFirst({
+      where: { isActive: true }
     })
 
+    if (store) {
+      await prisma.userStore.create({
+        data: {
+          userId: user.id,
+          storeId: store.id,
+          isActive: true
+        }
+      })
+    }
+
     return NextResponse.json(user, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Registration error:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error.message || "Internal server error" },
       { status: 500 }
     )
   }
