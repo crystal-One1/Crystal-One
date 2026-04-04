@@ -1,0 +1,165 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Enums replaced with string types for SQLite compatibility
+
+model User {
+  id             String   @id @default(uuid())
+  phoneNumber    String   @unique
+  passwordHash   String
+  name           String?
+  balance        Float    @default(0)
+  role           String   @default("USER")
+  referralCode   String   @unique
+  referredByCode String?
+  referredBy     User?    @relation("Referrals", fields: [referredByCode], references: [referralCode], onDelete: SetNull)
+  activeStoreId  Int?     @default(1)
+  isVerified     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  referrals                 User[]           @relation("Referrals")
+  deposits                  Deposit[]
+  withdrawals               Withdrawal[]
+  userStores                UserStore[]
+  completedTasks            CompletedTask[]
+  referralRewardsAsReferrer ReferralReward[] @relation("ReferrerRewards")
+  referralRewardsAsReferred ReferralReward[] @relation("ReferredRewards")
+
+  @@map("users")
+}
+
+model Store {
+  id             Int      @id @default(autoincrement())
+  name           String
+  price          Float
+  profitPerTask  Float
+  tasksAvailable Int
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userStores UserStore[]
+  tasks      Task[]
+
+  @@map("stores")
+}
+
+model UserStore {
+  id        String   @id @default(uuid())
+  userId    String
+  storeId   Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storeId])
+  @@map("user_stores")
+}
+
+model Task {
+  id           String   @id @default(uuid())
+  storeId      Int
+  title        String
+  description  String
+  imageUrl     String?
+  productPrice Float?
+  profitMargin Float?
+  sellingPrice Float?
+  earnings     Float
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  store          Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  completedTasks CompletedTask[]
+
+  @@map("tasks")
+}
+
+model CompletedTask {
+  id        String   @id @default(uuid())
+  userId    String
+  taskId    String
+  status    String   @default("PENDING")
+  earnings  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("completed_tasks")
+}
+
+model Deposit {
+  id             String   @id @default(uuid())
+  userId         String
+  amount         Float
+  transferNumber String
+  proofImageUrl  String?
+  status         String   @default("PENDING")
+  adminNote      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("deposits")
+}
+
+model Withdrawal {
+  id               String   @id @default(uuid())
+  userId           String
+  amount           Float
+  transferToNumber String
+  status           String   @default("PENDING")
+  adminNote        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawals")
+}
+
+model ReferralReward {
+  id         String   @id @default(uuid())
+  referrerId String
+  referredId String
+  amount     Float    @default(10)
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  referrer User @relation("ReferrerRewards", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred User @relation("ReferredRewards", fields: [referredId], references: [id], onDelete: Cascade)
+
+  @@unique([referrerId, referredId])
+  @@map("referral_rewards")
+}
+
+model AppSettings {
+  id                    Int      @id @default(1)
+  welcomeMessage        String?
+  welcomeMessageVisible Boolean  @default(true)
+  adminDepositNumber    String?
+  depositInstructions   String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("app_settings")
+}

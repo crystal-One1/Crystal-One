@@ -11,16 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum RequestStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
+// Enums replaced with string types for SQLite compatibility
 
 model User {
   id             String    @id @default(uuid())
@@ -28,7 +19,7 @@ model User {
   passwordHash   String
   name           String?
   balance        Float     @default(0)
-  role           UserRole  @default(USER)
+  role           String  @default("USER")
   referralCode   String    @unique
   referredByCode String?
   referredBy     User?     @relation("Referrals", fields: [referredByCode], references: [referralCode], onDelete: SetNull)
@@ -103,7 +94,7 @@ model CompletedTask {
   id        String   @id @default(uuid())
   userId    String
   taskId    String
-  status    RequestStatus @default(PENDING)
+  status    String @default("PENDING")
   earnings  Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -120,7 +111,7 @@ model Deposit {
   amount         Float
   transferNumber String
   proofImageUrl  String?
-  status         RequestStatus @default(PENDING)
+  status         String @default("PENDING")
   adminNote      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -135,7 +126,7 @@ model Withdrawal {
   userId          String
   amount          Float
   transferToNumber String
-  status          RequestStatus @default(PENDING)
+  status          String @default("PENDING")
   adminNote       String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -150,7 +141,7 @@ model ReferralReward {
   referrerId    String
   referredId    String
   amount        Float    @default(10)
-  status        RequestStatus @default(PENDING)
+  status        String @default("PENDING")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
