@@ -5,6 +5,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const errorsAR: Record<string, string> = {
+  "Invalid phone number or password": "رقم الهاتف أو كلمة المرور غير صحيحة",
+  "An error occurred. Please try again.": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+};
+
+function translateError(error: string): string {
+  return errorsAR[error] || error;
+}
+
 export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +24,12 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!phoneNumber || !password) {
+      setError("يرجى إدخال رقم الهاتف وكلمة المرور");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -25,12 +40,12 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid phone number or password");
+        setError("رقم الهاتف أو كلمة المرور غير صحيحة");
       } else {
         router.push("/dashboard");
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setError("حدث خطأ. يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);
     }
@@ -43,41 +58,41 @@ export default function LoginPage() {
           <Link href="/profile" className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             TaskHub
           </Link>
-          <h1 className="text-2xl font-bold text-white mt-4">Welcome Back</h1>
-          <p className="text-white/60">Sign in to your account</p>
+          <h1 className="text-2xl font-bold text-white mt-4">تسجيل الدخول</h1>
+          <p className="text-white/60">سجل دخولك إلى حسابك</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
               {error}
             </div>
           )}
 
           <div>
             <label className="block text-sm font-medium text-white/80 mb-2">
-              Phone Number
+              رقم الهاتف
             </label>
             <input
               type="text"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
-              placeholder="Enter your phone number"
+              placeholder="أدخل رقم الهاتف"
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-white/80 mb-2">
-              Password
+              كلمة المرور
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
-              placeholder="Enter your password"
+              placeholder="أدخل كلمة المرور"
               required
             />
           </div>
@@ -87,14 +102,14 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "جاري تسجيل الدخول..." : "دخول"}
           </button>
         </form>
 
         <p className="text-center text-white/60 mt-6">
-          Don&apos;t have an account?{" "}
+          ليس لديك حساب؟{" "}
           <Link href="/register" className="text-purple-400 hover:text-pink-400 font-medium">
-            Register
+            إنشاء حساب
           </Link>
         </p>
       </div>
