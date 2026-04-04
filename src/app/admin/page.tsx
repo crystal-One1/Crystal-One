@@ -1,8 +1,9 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface User {
   id: string;
@@ -31,7 +32,6 @@ interface Withdrawal {
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const params = useParams();
   const [users, setUsers] = useState<User[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
@@ -93,23 +93,23 @@ export default function AdminDashboardPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-900">
-      <nav className="bg-neutral-800 border-b border-neutral-700 px-6 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <nav className="bg-white/5 backdrop-blur-md border-b border-white/10 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold text-white">Admin Control Panel</h1>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Admin Control Panel
+          </h1>
           <div className="flex gap-4">
-            <a href="/dashboard" className="text-neutral-300 hover:text-white">User Dashboard</a>
-            <button
-              onClick={() => router.push("/api/auth/signout")}
-              className="text-red-400 hover:text-red-300"
-            >
+            <Link href="/dashboard" className="text-white/80 hover:text-white">User Dashboard</Link>
+            <Link href="/profile" className="text-white/80 hover:text-white">Home</Link>
+            <button onClick={() => router.push("/api/auth/signout")} className="text-red-400 hover:text-red-300">
               Sign Out
             </button>
           </div>
@@ -120,39 +120,39 @@ export default function AdminDashboardPage() {
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setActiveTab("users")}
-            className={`px-4 py-2 rounded-lg ${activeTab === "users" ? "bg-indigo-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+            className={`px-4 py-2 rounded-xl transition ${activeTab === "users" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white" : "bg-white/10 text-white/80 hover:bg-white/20"}`}
           >
             Users ({users.length})
           </button>
           <button
             onClick={() => setActiveTab("deposits")}
-            className={`px-4 py-2 rounded-lg ${activeTab === "deposits" ? "bg-indigo-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+            className={`px-4 py-2 rounded-xl transition ${activeTab === "deposits" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white" : "bg-white/10 text-white/80 hover:bg-white/20"}`}
           >
             Deposits ({deposits.filter(d => d.status === "PENDING").length} pending)
           </button>
           <button
             onClick={() => setActiveTab("withdrawals")}
-            className={`px-4 py-2 rounded-lg ${activeTab === "withdrawals" ? "bg-indigo-600 text-white" : "bg-neutral-800 text-neutral-300"}`}
+            className={`px-4 py-2 rounded-xl transition ${activeTab === "withdrawals" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white" : "bg-white/10 text-white/80 hover:bg-white/20"}`}
           >
             Withdrawals ({withdrawals.filter(w => w.status === "PENDING").length} pending)
           </button>
         </div>
 
         {activeTab === "users" && (
-          <div className="bg-neutral-800 rounded-xl border border-neutral-700 overflow-hidden">
+          <div className="bg-gradient-to-br from-slate-800/50 to-purple-800/50 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-neutral-700">
+              <thead className="bg-white/10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-white">Phone</th>
-                  <th className="px-4 py-3 text-left text-white">Name</th>
-                  <th className="px-4 py-3 text-left text-white">Role</th>
-                  <th className="px-4 py-3 text-left text-white">Balance</th>
+                  <th className="px-4 py-3 text-left text-white/80">Phone</th>
+                  <th className="px-4 py-3 text-left text-white/80">Name</th>
+                  <th className="px-4 py-3 text-left text-white/80">Role</th>
+                  <th className="px-4 py-3 text-left text-white/80">Balance</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.id} className="border-t border-neutral-700">
-                    <td className="px-4 py-3 text-neutral-300">{user.phoneNumber}</td>
+                  <tr key={user.id} className="border-t border-white/10">
+                    <td className="px-4 py-3 text-white/60">{user.phoneNumber}</td>
                     <td className="px-4 py-3 text-white">{user.name || "N/A"}</td>
                     <td className="px-4 py-3 text-white">{user.role}</td>
                     <td className="px-4 py-3 text-green-400">${user.balance.toFixed(2)}</td>
@@ -164,34 +164,34 @@ export default function AdminDashboardPage() {
         )}
 
         {activeTab === "deposits" && (
-          <div className="bg-neutral-800 rounded-xl border border-neutral-700 overflow-hidden">
+          <div className="bg-gradient-to-br from-slate-800/50 to-purple-800/50 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-neutral-700">
+              <thead className="bg-white/10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-white">Amount</th>
-                  <th className="px-4 py-3 text-left text-white">Transfer #</th>
-                  <th className="px-4 py-3 text-left text-white">Status</th>
-                  <th className="px-4 py-3 text-left text-white">Actions</th>
+                  <th className="px-4 py-3 text-left text-white/80">Amount</th>
+                  <th className="px-4 py-3 text-left text-white/80">Transfer #</th>
+                  <th className="px-4 py-3 text-left text-white/80">Status</th>
+                  <th className="px-4 py-3 text-left text-white/80">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {deposits.map((deposit) => (
-                  <tr key={deposit.id} className="border-t border-neutral-700">
+                  <tr key={deposit.id} className="border-t border-white/10">
                     <td className="px-4 py-3 text-green-400">${deposit.amount}</td>
-                    <td className="px-4 py-3 text-neutral-300">{deposit.transferNumber}</td>
+                    <td className="px-4 py-3 text-white/60">{deposit.transferNumber}</td>
                     <td className="px-4 py-3 text-white">{deposit.status}</td>
                     <td className="px-4 py-3">
                       {deposit.status === "PENDING" && (
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleAction("deposit", deposit.id, "approve")}
-                            className="px-2 py-1 bg-green-600 text-white rounded text-sm"
+                            className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg text-sm"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => handleAction("deposit", deposit.id, "reject")}
-                            className="px-2 py-1 bg-red-600 text-white rounded text-sm"
+                            className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg text-sm"
                           >
                             Reject
                           </button>
@@ -206,34 +206,34 @@ export default function AdminDashboardPage() {
         )}
 
         {activeTab === "withdrawals" && (
-          <div className="bg-neutral-800 rounded-xl border border-neutral-700 overflow-hidden">
+          <div className="bg-gradient-to-br from-slate-800/50 to-purple-800/50 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-neutral-700">
+              <thead className="bg-white/10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-white">Amount</th>
-                  <th className="px-4 py-3 text-left text-white">Transfer To</th>
-                  <th className="px-4 py-3 text-left text-white">Status</th>
-                  <th className="px-4 py-3 text-left text-white">Actions</th>
+                  <th className="px-4 py-3 text-left text-white/80">Amount</th>
+                  <th className="px-4 py-3 text-left text-white/80">Transfer To</th>
+                  <th className="px-4 py-3 text-left text-white/80">Status</th>
+                  <th className="px-4 py-3 text-left text-white/80">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {withdrawals.map((withdrawal) => (
-                  <tr key={withdrawal.id} className="border-t border-neutral-700">
+                  <tr key={withdrawal.id} className="border-t border-white/10">
                     <td className="px-4 py-3 text-red-400">${withdrawal.amount}</td>
-                    <td className="px-4 py-3 text-neutral-300">{withdrawal.transferToNumber}</td>
+                    <td className="px-4 py-3 text-white/60">{withdrawal.transferToNumber}</td>
                     <td className="px-4 py-3 text-white">{withdrawal.status}</td>
                     <td className="px-4 py-3">
                       {withdrawal.status === "PENDING" && (
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleAction("withdrawal", withdrawal.id, "approve")}
-                            className="px-2 py-1 bg-green-600 text-white rounded text-sm"
+                            className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg text-sm"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => handleAction("withdrawal", withdrawal.id, "reject")}
-                            className="px-2 py-1 bg-red-600 text-white rounded text-sm"
+                            className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg text-sm"
                           >
                             Reject
                           </button>
