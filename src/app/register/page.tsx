@@ -4,20 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const errorsAR: Record<string, string> = {
-  "Phone number and password are required": "رقم الهاتف وكلمة المرور مطلوبان",
-  "Phone number already registered": "رقم الهاتف مسجل بالفعل",
-  "Passwords do not match": "كلمات المرور غير متطابقة",
-  "An error occurred. Please try again.": "حدث خطأ. يرجى المحاولة مرة أخرى.",
-  "Invalid phone number or password": "رقم الهاتف أو كلمة المرور غير صحيحة",
-  "Unauthorized": "غير مصرح",
-  "Internal server error": "خطأ في الخادم",
-};
-
-function translateError(error: string): string {
-  return errorsAR[error] || error;
-}
-
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     phoneNumber: "",
@@ -38,6 +24,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
 
     if (!formData.phoneNumber || !formData.password || !formData.name) {
       setError("يرجى ملء جميع الحقول المطلوبة");
@@ -61,26 +48,26 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phoneNumber: formData.phoneNumber,
+          phoneNumber: formData.phoneNumber.trim(),
           password: formData.password,
-          name: formData.name,
-          referralCode: formData.referralCode || undefined,
+          name: formData.name.trim(),
+          referralCode: formData.referralCode.trim() || undefined,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(translateError(data.error || "فشل التسجيل"));
+        setError(data.error || "فشل التسجيل");
         return;
       }
 
-      setSuccess("تم إنشاء الحساب بنجاح!");
+      setSuccess(data.message || "تم إنشاء الحساب بنجاح!");
       setTimeout(() => {
         router.push("/login");
-      }, 1500);
-    } catch {
-      setError("حدث خطأ. يرجى المحاولة مرة أخرى.");
+      }, 2000);
+    } catch (err) {
+      setError("حدث خطأ في الاتصال بالخادم");
     } finally {
       setLoading(false);
     }
@@ -130,7 +117,7 @@ export default function RegisterPage() {
               رقم الهاتف
             </label>
             <input
-              type="text"
+              type="tel"
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
@@ -150,7 +137,7 @@ export default function RegisterPage() {
               value={formData.password}
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
-              placeholder="أنشئ كلمة مرور"
+              placeholder="أنشئ كلمة مرور (6 أحرف على الأقل)"
               required
             />
           </div>

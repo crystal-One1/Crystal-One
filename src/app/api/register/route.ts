@@ -5,96 +5,84 @@ import crypto from "crypto"
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { phoneNumber, password, name, referralCode } = body
-
-    if (!phoneNumber || !password) {
+    let body
+    try {
+      body = await request.json()
+    } catch {
       return NextResponse.json(
-        { error: "Phone number and password are required" },
+        { error: "Invalid JSON format" },
         { status: 400 }
       )
     }
 
+    const { phoneNumber, password, name } = body || {}
+
+    if (!phoneNumber || typeof phoneNumber !== "string") {
+      return NextResponse.json(
+        { error: "رقم الهاتف مطلوب" },
+        { status: 400 }
+      )
+    }
+
+    if (!password || typeof password !== "string" || password.length < 6) {
+      return NextResponse.json(
+        { error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" },
+        { status: 400 }
+      )
+    }
+
+    const cleanPhone = phoneNumber.trim()
+
     const existingUser = await prisma.user.findUnique({
-      where: { phoneNumber }
-    })
+      where: { phoneNumber: cleanPhone }
+    }).catch(() => null)
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "Phone number already registered" },
+        { error: "رقم الهاتف مسجل بالفعل" },
         { status: 409 }
       )
     }
 
-    const passwordHash = await bcrypt.hash(password, 12)
-    const userReferralCode = crypto.randomBytes(4).toString('hex').toUpperCase()
-
-    let referredByCode: string | null = null
-
-    if (referralCode) {
-      const referrer = await prisma.user.findUnique({
-        where: { referralCode: referralCode.toUpperCase() }
-      })
-      if (referrer) {
-        referredByCode = referralCode.toUpperCase()
-      }
+    const passwordHash = await bcrypt.hash(password, 10).catch(() => null)
+    if (!passwordHash) {
+      return NextResponse.json(
+        { error: "خطأ في تشفير كلمة المرور" },
+        { status: 500 }
+      )
     }
+
+    const referralCode = crypto.randomBytes(4).toString("hex").toUpperCase()
 
     const user = await prisma.user.create({
       data: {
-        phoneNumber,
+        phoneNumber: cleanPhone,
         passwordHash,
-        name: name || null,
-        referralCode: userReferralCode,
-        referredByCode,
+        name: name?.trim() || null,
+        referralCode,
         isVerified: true,
         role: "USER",
         balance: 0
+      }
+    }).catch((err) => {
+      console.error("Create user error:", err)
+      throw new Error("Failed to create user")
+    })
+
+    return NextResponse.json(
+      {
+        id: user.id,
+        phoneNumber: user.phoneNumber,
+        name: user.name,
+        referralCode: user.referralCode,
+        message: "تم إنشاء الحساب بنجاح"
       },
-      select: {
-        id: true,
-        phoneNumber: true,
-        name: true,
-        referralCode: true,
-        referredByCode: true
-      }
-    })
-
-    if (referredByCode) {
-      const referrer = await prisma.user.findUnique({
-        where: { referralCode: referredByCode }
-      })
-      if (referrer) {
-        await prisma.referralReward.create({
-          data: {
-            referrerId: referrer.id,
-            referredId: user.id,
-            amount: 10,
-            status: "PENDING"
-          }
-        })
-      }
-    }
-
-    const store = await prisma.store.findFirst({
-      where: { isActive: true }
-    })
-
-    if (store) {
-      await prisma.userStore.create({
-        data: {
-          userId: user.id,
-          storeId: store.id,
-          isActive: true
-        }
-      })
-    }
-
-    return NextResponse.json(user, { status: 201 })
+      { status: 201 }
+    )
   } catch (error: any) {
     console.error("Registration error:", error)
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: error.message || "حدث خطأ في الخادم" },
       { status: 500 }
     )
   }
