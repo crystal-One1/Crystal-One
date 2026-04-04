@@ -1,22 +1,13 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const errorsAR: Record<string, string> = {
-  "Invalid phone number or password": "رقم الهاتف أو كلمة المرور غير صحيحة",
-  "An error occurred. Please try again.": "حدث خطأ. يرجى المحاولة مرة أخرى.",
-};
-
-function translateError(error: string): string {
-  return errorsAR[error] || error;
-}
-
 export default function LoginPage() {
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -25,27 +16,36 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!phoneNumber || !password) {
-      setError("يرجى إدخال رقم الهاتف وكلمة المرور");
+    const phoneWithCode = code + phone;
+
+    if (!phoneWithCode || !password) {
+      setError("يرجى إدخال جميع البيانات");
       return;
     }
 
     setLoading(true);
 
     try {
-      const result = await signIn("credentials", {
-        phoneNumber,
+      const result = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber: phoneWithCode, password }),
+      }).catch(() => null);
+
+      const signIn = await import("next-auth/react").then(m => m.signIn);
+      const result2 = await signIn("credentials", {
+        phoneNumber: phoneWithCode,
         password,
         redirect: false,
       });
 
-      if (result?.error) {
+      if (result2?.error) {
         setError("رقم الهاتف أو كلمة المرور غير صحيحة");
       } else {
         router.push("/dashboard");
       }
     } catch {
-      setError("حدث خطأ. يرجى المحاولة مرة أخرى.");
+      setError("حدث خطأ في تسجيل الدخول");
     } finally {
       setLoading(false);
     }
@@ -59,10 +59,10 @@ export default function LoginPage() {
             TaskHub
           </Link>
           <h1 className="text-2xl font-bold text-white mt-4">تسجيل الدخول</h1>
-          <p className="text-white/60">سجل دخولك إلى حسابك</p>
+          <p className="text-white/60">أدخل بياناتك للدخول</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
               {error}
@@ -70,28 +70,49 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              رقم الهاتف
-            </label>
+            <label className="block text-sm font-medium text-white/80 mb-2">رمز الدولة</label>
+            <select
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500"
+              required
+            >
+              <option value="">اختر الدولة</option>
+              <option value="+20">🇪🇬 +20 مصر</option>
+              <option value="+966">🇸🇦 +966 السعودية</option>
+              <option value="+971">🇦🇪 +971 الإمارات</option>
+              <option value="+212">🇲🇦 +212 المغرب</option>
+              <option value="+962">🇯🇴 +962 الأردن</option>
+              <option value="+970">🇵🇸 +970 فلسطين</option>
+              <option value="+964">🇮🇶 +964 العراق</option>
+              <option value="+973">🇧🇭 +973 البحرين</option>
+              <option value="+965">🇰🇼 +965 الكويت</option>
+              <option value="+968">🇴🇲 +968 عُمان</option>
+              <option value="+974">🇶🇦 +974 قطر</option>
+              <option value="+216">🇹🇳 +216 تونس</option>
+              <option value="+213">🇩🇿 +213 الجزائر</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-2">رقم الهاتف</label>
             <input
-              type="text"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
               placeholder="أدخل رقم الهاتف"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              كلمة المرور
-            </label>
+            <label className="block text-sm font-medium text-white/80 mb-2">كلمة المرور</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
               placeholder="أدخل كلمة المرور"
               required
             />
@@ -100,17 +121,14 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition disabled:opacity-50"
           >
-            {loading ? "جاري تسجيل الدخول..." : "دخول"}
+            {loading ? "جاري الدخول..." : "دخول"}
           </button>
         </form>
 
         <p className="text-center text-white/60 mt-6">
-          ليس لديك حساب؟{" "}
-          <Link href="/register" className="text-purple-400 hover:text-pink-400 font-medium">
-            إنشاء حساب
-          </Link>
+          ليس لديك حساب؟ <Link href="/register" className="text-purple-400 hover:text-pink-400">إنشاء حساب</Link>
         </p>
       </div>
     </div>

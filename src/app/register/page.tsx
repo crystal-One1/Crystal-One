@@ -4,19 +4,37 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const COUNTRY_CODES = [
+  { code: "+20", country: "مصر", flag: "🇪🇬" },
+  { code: "+966", country: "السعودية", flag: "🇸🇦" },
+  { code: "+971", country: "الإمارات", flag: "🇦🇪" },
+  { code: "+212", country: "المغرب", flag: "🇲🇦" },
+  { code: "+962", country: "الأردن", flag: "🇯🇴" },
+  { code: "+970", country: "فلسطين", flag: "🇵🇸" },
+  { code: "+964", country: "العراق", flag: "🇮🇶" },
+  { code: "+973", country: "البحرين", flag: "🇧🇭" },
+  { code: "+965", country: "الكويت", flag: "🇰🇼" },
+  { code: "+968", country: "عُمان", flag: "🇴🇲" },
+  { code: "+974", country: "قطر", flag: "🇶🇦" },
+  { code: "+216", country: "تونس", flag: "🇹🇳" },
+  { code: "+213", country: "الجزائر", flag: "🇩🇿" },
+];
+
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    phoneNumber: "",
+    name: "",
+    phone: "",
+    code: "+20",
     password: "",
     confirmPassword: "",
-    name: "",
+    referralCode: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -24,12 +42,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    const phone = formData.phoneNumber.trim();
-    const pass = formData.password.trim();
     const name = formData.name.trim();
+    const phone = formData.code + formData.phone.trim();
+    const pass = formData.password.trim();
 
-    if (!phone || !pass || !name) {
-      setError("يرجى填写 جميع الحقول");
+    if (!name || !phone || !pass) {
+      setError("يرجى填写 جميع الحقول المطلوبة");
       return;
     }
 
@@ -49,7 +67,12 @@ export default function RegisterPage() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: phone, password: pass, name }),
+        body: JSON.stringify({
+          phoneNumber: phone,
+          password: pass,
+          name: name,
+          referralCode: formData.referralCode.trim() || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -106,11 +129,28 @@ export default function RegisterPage() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-white/80 mb-2">رمز الدولة</label>
+            <select
+              name="code"
+              value={formData.code}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500"
+              required
+            >
+              {COUNTRY_CODES.map((item) => (
+                <option key={item.code} value={item.code} className="bg-slate-800">
+                  {item.flag} {item.code} {item.country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-white/80 mb-2">رقم الهاتف</label>
             <input
               type="tel"
-              name="phoneNumber"
-              value={formData.phoneNumber}
+              name="phone"
+              value={formData.phone}
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
               placeholder="أدخل رقم الهاتف"
@@ -141,6 +181,18 @@ export default function RegisterPage() {
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
               placeholder="أعد إدخال كلمة المرور"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-2">كود الإحالة (اختياري)</label>
+            <input
+              type="text"
+              name="referralCode"
+              value={formData.referralCode}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+              placeholder="أدخل كود الإحالة إن имеется"
             />
           </div>
 
