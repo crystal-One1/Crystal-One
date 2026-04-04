@@ -1,5 +1,6 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -7,7 +8,7 @@ import Link from "next/link";
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState("+20");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    const phoneWithCode = code + phone;
+    const phoneWithCode = code + phone.replace(/^0/, "");
 
     if (!phoneWithCode || !password) {
       setError("يرجى إدخال جميع البيانات");
@@ -26,26 +27,19 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await fetch("/api/auth/callback/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: phoneWithCode, password }),
-      }).catch(() => null);
-
-      const signIn = await import("next-auth/react").then(m => m.signIn);
-      const result2 = await signIn("credentials", {
+      const result = await signIn("credentials", {
         phoneNumber: phoneWithCode,
-        password,
+        password: password,
         redirect: false,
       });
 
-      if (result2?.error) {
+      if (result?.error) {
         setError("رقم الهاتف أو كلمة المرور غير صحيحة");
       } else {
         router.push("/dashboard");
       }
-    } catch {
-      setError("حدث خطأ في تسجيل الدخول");
+    } catch (err: any) {
+      setError(err.message || "حدث خطأ في تسجيل الدخول");
     } finally {
       setLoading(false);
     }
@@ -77,7 +71,6 @@ export default function LoginPage() {
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500"
               required
             >
-              <option value="">اختر الدولة</option>
               <option value="+20">🇪🇬 +20 مصر</option>
               <option value="+966">🇸🇦 +966 السعودية</option>
               <option value="+971">🇦🇪 +971 الإمارات</option>
@@ -101,7 +94,7 @@ export default function LoginPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-              placeholder="أدخل رقم الهاتف"
+              placeholder="أدخل رقم الهاتف بدون رمز الدولة"
               required
             />
           </div>

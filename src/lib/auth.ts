@@ -12,34 +12,37 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.phoneNumber || !credentials?.password) {
-          return null
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            phoneNumber: credentials.phoneNumber
+        try {
+          if (!credentials?.phoneNumber || !credentials?.password) {
+            return null
           }
-        })
 
-        if (!user) {
+          const user = await prisma.user.findUnique({
+            where: { phoneNumber: credentials.phoneNumber }
+          })
+
+          if (!user) {
+            return null
+          }
+
+          const passwordValid = bcrypt.compareSync(
+            credentials.password,
+            user.passwordHash
+          )
+
+          if (!passwordValid) {
+            return null
+          }
+
+          return {
+            id: user.id,
+            phoneNumber: user.phoneNumber,
+            role: user.role || "USER",
+            name: user.name || "مستخدم"
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
           return null
-        }
-
-        const passwordValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
-        )
-
-        if (!passwordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          phoneNumber: user.phoneNumber,
-          role: user.role,
-          name: user.name
         }
       }
     })
@@ -47,7 +50,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt"
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-key",
   pages: {
     signIn: "/login"
   },
