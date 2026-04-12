@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -13,7 +14,6 @@ export default function RegisterPage() {
     referralCode: "",
   });
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -69,11 +69,22 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         setError(data.error || "فشل إنشاء الحساب");
+        setLoading(false);
         return;
       }
 
-      setSuccess(true);
-      setTimeout(() => router.push("/login"), 2000);
+      // Auto login after registration
+      const result = await signIn("credentials", {
+        identifier: username,
+        password: pass,
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        router.push("/dashboard");
+      } else {
+        router.push("/login");
+      }
     } catch {
       setError("حدث خطأ في الاتصال");
     } finally {
@@ -96,12 +107,6 @@ export default function RegisterPage() {
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
               {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm text-center">
-              تم إنشاء الحساب بنجاح! جاري التحويل...
             </div>
           )}
 
