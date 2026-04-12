@@ -7,28 +7,30 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.phoneNumber) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { phoneNumber: session.user.phoneNumber },
+      where: { id: session.user.id },
       select: {
         id: true,
-        phoneNumber: true,
         name: true,
+        email: true,
+        phoneNumber: true,
         role: true,
         balance: true,
+        referralCode: true,
       },
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
     }
 
     return NextResponse.json(user);
   } catch (error) {
     console.error("Error fetching user:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
 }

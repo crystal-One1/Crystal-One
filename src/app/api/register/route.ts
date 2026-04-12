@@ -11,20 +11,41 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 })
   }
 
-  const { phoneNumber, password, name } = body || {}
+  const { username, email, password, confirmPassword, referralCode } = body || {}
 
-  if (!phoneNumber || !password) {
-    return NextResponse.json({ error: "المعلومات المطلوبة ناقصة" }, { status: 400 })
+  if (!username || !email || !password) {
+    return NextResponse.json({ error: "يرجى ملء جميع الحقول المطلوبة" }, { status: 400 })
   }
 
-  const cleanPhone = phoneNumber.toString().trim()
+  if (password !== confirmPassword) {
+    return NextResponse.json({ error: "كلمات المرور غير متطابقة" }, { status: 400 })
+  }
+
+  if (password.length < 6) {
+    return NextResponse.json({ error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" }, { status: 400 })
+  }
+
+  const cleanUsername = username.toString().trim()
+  const cleanEmail = email.toString().trim().toLowerCase()
   const cleanPassword = password.toString().trim()
-  const cleanName = name?.toString().trim() || "مستخدم"
 
   try {
-    const existing = await prisma.user.findUnique({ where: { phoneNumber: cleanPhone } })
-    if (existing) {
-      return NextResponse.json({ error: "هذا الرقم مسجل بالفعل" }, { status: 409 })
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { name: cleanUsername },
+          { email: cleanEmail }
+        ]
+      }
+    })
+
+    if (existingUser) {
+      if (existingUser.name === cleanUsername) {
+        return NextResponse.json({ error: "اسم المستخدم مسجل بالفعل" }, { status: 409 })
+      }
+      if (existingUser.email === cleanEmail) {
+        return NextResponse.json({ error: "البريد الإلكتروني مسجل بالفعل" }, { status: 409 })
+      }
     }
 
     const hash = bcrypt.hashSync(cleanPassword, 10)
@@ -32,10 +53,11 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.create({
       data: {
-        phoneNumber: cleanPhone,
+        name: cleanUsername,
+        email: cleanEmail,
         passwordHash: hash,
-        name: cleanName,
         referralCode: refCode,
+        phoneNumber: null,
         isVerified: true,
         role: "USER",
         balance: 0
@@ -43,7 +65,12 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json(
-      { success: true, message: "تم إنشاء الحساب بنجاح", phone: user.phoneNumber },
+      { 
+        success: true, 
+        message: "تم إنشاء الحساب بنجاح", 
+        username: user.name,
+        email: user.email 
+      },
       { status: 201 }
     )
   } catch (err: any) {

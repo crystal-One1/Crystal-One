@@ -5,12 +5,12 @@ import { authOptions } from "@/lib/auth";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.phoneNumber) {
+  if (!session?.user?.id) {
     return { error: true, status: 401 };
   }
 
   const user = await prisma.user.findUnique({
-    where: { phoneNumber: session.user.phoneNumber },
+    where: { id: session.user.id },
   });
 
   if (!user || user.role !== "ADMIN") {
@@ -23,14 +23,14 @@ async function requireAdmin() {
 export async function GET() {
   const adminCheck = await requireAdmin();
   if (adminCheck.error) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: adminCheck.status });
+    return NextResponse.json({ error: "غير مصرح" }, { status: adminCheck.status });
   }
 
   try {
     const withdrawals = await prisma.withdrawal.findMany({
       include: {
         user: {
-          select: { phoneNumber: true, name: true },
+          select: { name: true, email: true, phoneNumber: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -43,19 +43,21 @@ export async function GET() {
         transferToNumber: w.transferToNumber,
         status: w.status,
         createdAt: w.createdAt.toISOString(),
+        userName: w.user.name,
+        userEmail: w.user.email,
         userPhone: w.user.phoneNumber,
       }))
     );
   } catch (error) {
     console.error("Error fetching withdrawals:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
 }
 
 export async function PUT(req: Request) {
   const adminCheck = await requireAdmin();
   if (adminCheck.error) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: adminCheck.status });
+    return NextResponse.json({ error: "غير مصرح" }, { status: adminCheck.status });
   }
 
   try {
@@ -63,7 +65,7 @@ export async function PUT(req: Request) {
 
     const withdrawal = await prisma.withdrawal.findUnique({ where: { id } });
     if (!withdrawal) {
-      return NextResponse.json({ error: "Withdrawal not found" }, { status: 404 });
+      return NextResponse.json({ error: "السحب غير موجود" }, { status: 404 });
     }
 
     const newStatus = action === "approve" ? "APPROVED" : "REJECTED";
@@ -83,6 +85,6 @@ export async function PUT(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating withdrawal:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
 }

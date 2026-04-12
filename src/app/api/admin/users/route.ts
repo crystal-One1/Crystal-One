@@ -5,12 +5,12 @@ import { authOptions } from "@/lib/auth";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.phoneNumber) {
+  if (!session?.user?.id) {
     return { error: true, status: 401 };
   }
 
   const user = await prisma.user.findUnique({
-    where: { phoneNumber: session.user.phoneNumber },
+    where: { id: session.user.id },
   });
 
   if (!user || user.role !== "ADMIN") {
@@ -23,17 +23,19 @@ async function requireAdmin() {
 export async function GET() {
   const adminCheck = await requireAdmin();
   if (adminCheck.error) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: adminCheck.status });
+    return NextResponse.json({ error: "غير مصرح" }, { status: adminCheck.status });
   }
 
   try {
     const users = await prisma.user.findMany({
       select: {
         id: true,
-        phoneNumber: true,
         name: true,
+        email: true,
+        phoneNumber: true,
         role: true,
         balance: true,
+        createdAt: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -41,6 +43,6 @@ export async function GET() {
     return NextResponse.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
 }

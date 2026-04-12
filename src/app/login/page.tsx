@@ -6,9 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("+20");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -17,9 +16,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    const phoneWithCode = code + phone.replace(/^0/, "");
-
-    if (!phoneWithCode || !password) {
+    if (!identifier || !password) {
       setError("يرجى إدخال جميع البيانات");
       return;
     }
@@ -28,13 +25,13 @@ export default function LoginPage() {
 
     try {
       const result = await signIn("credentials", {
-        phoneNumber: phoneWithCode,
+        identifier: identifier.trim(),
         password: password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError("رقم الهاتف أو كلمة المرور غير صحيحة");
+        setError("اسم المستخدم أو البريد الإلكتروني أو كلمة المرور غير صحيحة");
       } else {
         router.push("/dashboard");
       }
@@ -53,7 +50,7 @@ export default function LoginPage() {
             TaskHub
           </Link>
           <h1 className="text-2xl font-bold text-white mt-4">تسجيل الدخول</h1>
-          <p className="text-white/60">أدخل بياناتك للدخول</p>
+          <p className="text-white/60">أدخل اسم المستخدم أو البريد الإلكتروني</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -64,37 +61,13 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">رمز الدولة</label>
-            <select
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500"
-              required
-            >
-              <option value="+20">🇪🇬 +20 مصر</option>
-              <option value="+966">🇸🇦 +966 السعودية</option>
-              <option value="+971">🇦🇪 +971 الإمارات</option>
-              <option value="+212">🇲🇦 +212 المغرب</option>
-              <option value="+962">🇯🇴 +962 الأردن</option>
-              <option value="+970">🇵🇸 +970 فلسطين</option>
-              <option value="+964">🇮🇶 +964 العراق</option>
-              <option value="+973">🇧🇭 +973 البحرين</option>
-              <option value="+965">🇰🇼 +965 الكويت</option>
-              <option value="+968">🇴🇲 +968 عُمان</option>
-              <option value="+974">🇶🇦 +974 قطر</option>
-              <option value="+216">🇹🇳 +216 تونس</option>
-              <option value="+213">🇩🇿 +213 الجزائر</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">رقم الهاتف</label>
+            <label className="block text-sm font-medium text-white/80 mb-2">اسم المستخدم أو البريد الإلكتروني</label>
             <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-              placeholder="أدخل رقم الهاتف بدون رمز الدولة"
+              placeholder="أدخل اسم المستخدم أو البريد الإلكتروني"
               required
             />
           </div>

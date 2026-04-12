@@ -4,27 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const COUNTRY_CODES = [
-  { code: "+20", country: "مصر", flag: "🇪🇬" },
-  { code: "+966", country: "السعودية", flag: "🇸🇦" },
-  { code: "+971", country: "الإمارات", flag: "🇦🇪" },
-  { code: "+212", country: "المغرب", flag: "🇲🇦" },
-  { code: "+962", country: "الأردن", flag: "🇯🇴" },
-  { code: "+970", country: "فلسطين", flag: "🇵🇸" },
-  { code: "+964", country: "العراق", flag: "🇮🇶" },
-  { code: "+973", country: "البحرين", flag: "🇧🇭" },
-  { code: "+965", country: "الكويت", flag: "🇰🇼" },
-  { code: "+968", country: "عُمان", flag: "🇴🇲" },
-  { code: "+974", country: "قطر", flag: "🇶🇦" },
-  { code: "+216", country: "تونس", flag: "🇹🇳" },
-  { code: "+213", country: "الجزائر", flag: "🇩🇿" },
-];
-
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    code: "+20",
+    username: "",
+    email: "",
     password: "",
     confirmPassword: "",
     referralCode: "",
@@ -34,7 +17,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -42,12 +25,13 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    const name = formData.name.trim();
-    const phone = formData.code + formData.phone.trim();
+    const username = formData.username.trim();
+    const email = formData.email.trim();
     const pass = formData.password.trim();
+    const confirmPass = formData.confirmPassword.trim();
 
-    if (!name || !phone || !pass) {
-      setError("يرجى填写 جميع الحقول المطلوبة");
+    if (!username || !email || !pass) {
+      setError("يرجى ملء جميع الحقول المطلوبة");
       return;
     }
 
@@ -56,8 +40,13 @@ export default function RegisterPage() {
       return;
     }
 
-    if (pass !== formData.confirmPassword) {
+    if (pass !== confirmPass) {
       setError("كلمات المرور غير متطابقة");
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setError("يرجى إدخال بريد إلكتروني صحيح");
       return;
     }
 
@@ -68,9 +57,10 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phoneNumber: phone,
+          username: username,
+          email: email,
           password: pass,
-          name: name,
+          confirmPassword: confirmPass,
           referralCode: formData.referralCode.trim() || undefined,
         }),
       });
@@ -116,44 +106,27 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">الاسم</label>
+            <label className="block text-sm font-medium text-white/80 mb-2">اسم المستخدم</label>
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-              placeholder="أدخل اسمك"
+              placeholder="أدخل اسم المستخدم"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">رمز الدولة</label>
-            <select
-              name="code"
-              value={formData.code}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500"
-              required
-            >
-              {COUNTRY_CODES.map((item) => (
-                <option key={item.code} value={item.code} className="bg-slate-800">
-                  {item.flag} {item.code} {item.country}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">رقم الهاتف</label>
+            <label className="block text-sm font-medium text-white/80 mb-2">البريد الإلكتروني</label>
             <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
+              type="email"
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-              placeholder="أدخل رقم الهاتف"
+              placeholder="أدخل البريد الإلكتروني"
               required
             />
           </div>
@@ -192,7 +165,7 @@ export default function RegisterPage() {
               value={formData.referralCode}
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-              placeholder="أدخل كود الإحالة إن имеется"
+              placeholder="أدخل كود الإحالة إن وجد"
             />
           </div>
 
