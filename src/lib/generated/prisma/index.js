@@ -225,7 +225,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/workspace/07a4a563-ebc4-4be0-9d19-f741cd4d4602/sessions/agent_e70422c4-9239-4f08-ac09-05ce0189e409/src/lib/generated/prisma",
+      "value": "/app/src/lib/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -239,7 +239,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/workspace/07a4a563-ebc4-4be0-9d19-f741cd4d4602/sessions/agent_e70422c4-9239-4f08-ac09-05ce0189e409/prisma/schema.prisma",
+    "sourceFilePath": "/app/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -252,7 +252,7 @@ const config = {
     "db"
   ],
   "activeProvider": "sqlite",
-  "postinstall": true,
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
